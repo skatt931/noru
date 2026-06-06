@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noru</title>
+    <meta
+      name="description"
+      content="Noru — простий реєстр закладів у Празі з модерацією через Supabase."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="public">
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Прага · громадський список</p>
+          <h1>Noru</h1>
+          <p class="hero-text">
+            Простий список закладів у Празі: з коментарями, посиланнями та
+            окремим рев’ю перед публікацією.
+          </p>
+        </div>
+
+        <nav class="view-switcher" aria-label="Перемикання view">
+          <button class="switch is-active" data-view-target="list-view" type="button">
+            Список
+          </button>
+          <button class="switch" data-view-target="add-view" type="button">
+            Додати заклад
+          </button>
+        </nav>
+      </header>
+
+      <main class="layout">
+        <section id="list-view" class="view is-visible">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Основний view</p>
+              <h2>Апрувнуті заклади</h2>
+            </div>
+            <label class="search-field">
+              <span class="search-label">Пошук</span>
+              <input
+                id="search-input"
+                type="search"
+                placeholder="Назва або коментар"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+
+          <div id="venues-list" class="cards-grid" aria-live="polite"></div>
+          <template id="venue-card-template">
+            <article class="venue-card">
+              <div class="venue-card-header">
+                <h3 class="venue-name"></h3>
+                <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+              </div>
+              <p class="owners-row" hidden></p>
+              <div class="comment-block"></div>
+              <div class="venue-meta">
+                <span class="meta-date"></span>
+              </div>
+            </article>
+          </template>
+        </section>
+
+        <section id="add-view" class="view">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Другий view</p>
+              <h2>Додати заклад</h2>
+            </div>
+            <p class="section-note">
+              Новий запис спочатку йде на рев’ю, а вже після апруву потрапляє в
+              основний список.
+            </p>
+          </div>
+
+          <form id="venue-form" class="panel form-panel">
+            <label class="field">
+              <span>Назва закладу</span>
+              <input id="name-input" name="name" type="text" required maxlength="140" />
+            </label>
+
+            <label class="field">
+              <span>Google Maps URL</span>
+              <input
+                id="maps-input"
+                name="google_maps_url"
+                type="url"
+                required
+                placeholder="https://maps.app.goo.gl/..."
+              />
+            </label>
+
+            <label class="field">
+              <span>Коментар</span>
+              <textarea
+                id="comment-input"
+                name="comment"
+                rows="5"
+                required
+                placeholder="Додайте контекст, факти й посилання. URL у тексті стануть клікабельними."
+              ></textarea>
+            </label>
+
+            <label class="field">
+              <span>Власники або додаткова нотатка (необов’язково)</span>
+              <input
+                id="owners-input"
+                name="owners"
+                type="text"
+                maxlength="220"
+                placeholder="Наприклад: ТОВ ..., фізособа ..., поки невідомо"
+              />
+            </label>
+
+            <button id="submit-button" class="primary-button" type="submit">
+              Надіслати на рев’ю
+            </button>
+            <p id="form-message" class="form-message" aria-live="polite"></p>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

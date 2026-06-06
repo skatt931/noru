@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noru Admin</title>
+    <meta
+      name="description"
+      content="Noru Admin — прихована адмін-панель для рев’ю закладів."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="admin">
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Noru · admin</p>
+          <h1>Admin Panel</h1>
+          <p class="hero-text">
+            Окрема панель для входу адміністратора, рев’ю заявок і модерації
+            списку закладів.
+          </p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel status-panel">
+          <div>
+            <p class="panel-label">Статус</p>
+            <p id="connection-status" class="status-text">
+              Підготовка адмін-панелі…
+            </p>
+          </div>
+          <div class="status-actions">
+            <span id="approved-count" class="stat-pill">0 апрувнутих</span>
+            <span id="pending-count" class="stat-pill">0 очікує рев’ю</span>
+          </div>
+        </section>
+
+        <section class="view is-visible">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Адмінський доступ</p>
+              <h2>Рев’юерська панель</h2>
+            </div>
+            <p class="section-note">
+              Ця сторінка не потрібна звичайним користувачам. Вона окрема від
+              публічного сайту.
+            </p>
+          </div>
+
+          <div class="review-grid">
+            <section class="panel auth-panel">
+              <div class="panel-heading">
+                <h3>Вхід адміністратора</h3>
+                <button id="logout-button" class="ghost-button" type="button" hidden>
+                  Вийти
+                </button>
+              </div>
+
+              <form id="login-form" class="stack">
+                <label class="field">
+                  <span>Email</span>
+                  <input id="reviewer-email" type="email" required />
+                </label>
+
+                <label class="field">
+                  <span>Пароль</span>
+                  <input id="reviewer-password" type="password" required />
+                </label>
+
+                <div class="dual-actions">
+                  <button class="primary-button" type="submit">Увійти</button>
+                  <button id="signup-button" class="ghost-button" type="button">
+                    Створити акаунт
+                  </button>
+                </div>
+              </form>
+
+              <div id="reviewer-session" class="reviewer-session" hidden>
+                <p id="reviewer-email-label"></p>
+                <p id="reviewer-role-label" class="muted-text"></p>
+                <button
+                  id="claim-reviewer-button"
+                  class="ghost-button"
+                  type="button"
+                  hidden
+                >
+                  Стати першим рев’юером
+                </button>
+              </div>
+
+              <p id="login-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="panel review-panel">
+              <div class="panel-heading">
+                <h3>Очікують на апрув</h3>
+                <button id="refresh-review-button" class="ghost-button" type="button">
+                  Оновити
+                </button>
+              </div>
+
+              <div id="review-list" class="review-list" aria-live="polite"></div>
+              <template id="review-card-template">
+                <article class="review-card">
+                  <div class="review-card-head">
+                    <div>
+                      <h4 class="review-name"></h4>
+                      <p class="review-date"></p>
+                    </div>
+                    <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+                  </div>
+                  <p class="owners-row" hidden></p>
+                  <div class="comment-block"></div>
+                  <div class="review-actions">
+                    <button class="primary-button approve-button" type="button">
+                      Апрувнути
+                    </button>
+                    <button class="ghost-button reject-button" type="button">
+                      Відхилити
+                    </button>
+                  </div>
+                </article>
+              </template>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
