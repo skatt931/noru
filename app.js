@@ -13,6 +13,8 @@
     pendingCount: document.getElementById("pending-count"),
     venuesList: document.getElementById("venues-list"),
     adminApprovedList: document.getElementById("admin-approved-list"),
+    publicSuccessBanner: document.getElementById("public-success-banner"),
+    publicSuccessText: document.getElementById("public-success-text"),
     venueCardTemplate: document.getElementById("venue-card-template"),
     reviewCardTemplate: document.getElementById("review-card-template"),
     adminApprovedCardTemplate: document.getElementById("admin-approved-card-template"),
@@ -37,6 +39,7 @@
     refreshReviewButton: document.getElementById("refresh-review-button"),
     refreshApprovedButton: document.getElementById("refresh-approved-button"),
     reviewList: document.getElementById("review-list"),
+    layoutButtons: document.querySelectorAll("[data-layout-mode]"),
     viewButtons: document.querySelectorAll("[data-view-target]"),
     views: document.querySelectorAll(".view"),
   };
@@ -47,9 +50,12 @@
     pendingVenues: [],
     session: null,
     isReviewer: false,
+    layoutMode: "grid",
   };
 
   let supabase = null;
+  let publicNoticeTimeoutId = null;
+  const PUBLIC_LAYOUT_STORAGE_KEY = "noru-public-layout-mode";
   const REQUEST_TIMEOUT_MS = 12000;
 
   if (hasSupabaseConfig && window.supabase) {
@@ -63,9 +69,11 @@
 
   async function initialize() {
     bindViewSwitcher();
+    bindLayoutSwitcher();
     bindSearch();
     bindVenueForm();
     bindReviewerActions();
+    loadSavedLayoutMode();
 
     if (!supabase) {
       if (refs.connectionStatus) {
@@ -123,13 +131,27 @@
 
     refs.viewButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        const targetId = button.dataset.viewTarget;
-        refs.viewButtons.forEach((item) => item.classList.remove("is-active"));
-        refs.views.forEach((view) => view.classList.remove("is-visible"));
-        button.classList.add("is-active");
-        document.getElementById(targetId).classList.add("is-visible");
+        setActiveView(button.dataset.viewTarget);
       });
     });
+  }
+
+  function setActiveView(targetId) {
+    if (!targetId) {
+      return;
+    }
+
+    refs.viewButtons.forEach((item) => {
+      item.classList.toggle("is-active", item.dataset.viewTarget === targetId);
+    });
+    refs.views.forEach((view) => {
+      view.classList.toggle("is-visible", view.id === targetId);
+    });
+
+    const targetView = document.getElementById(targetId);
+    if (targetView) {
+      targetView.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   function bindSearch() {
@@ -141,6 +163,60 @@
       applySearchFilter();
       renderPublicApprovedVenues();
     });
+  }
+
+  function bindLayoutSwitcher() {
+    if (!refs.layoutButtons.length) {
+      return;
+    }
+
+    refs.layoutButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        applyLayoutMode(button.dataset.layoutMode);
+      });
+    });
+  }
+
+  function loadSavedLayoutMode() {
+    if (!refs.layoutButtons.length) {
+      return;
+    }
+
+    let savedMode = "grid";
+
+    try {
+      const value = window.localStorage.getItem(PUBLIC_LAYOUT_STORAGE_KEY);
+      if (value === "grid" || value === "list") {
+        savedMode = value;
+      }
+    } catch (_error) {
+      savedMode = "grid";
+    }
+
+    applyLayoutMode(savedMode, { persist: false });
+  }
+
+  function applyLayoutMode(mode, options = {}) {
+    const nextMode = mode === "list" ? "list" : "grid";
+    const { persist = true } = options;
+
+    state.layoutMode = nextMode;
+
+    refs.layoutButtons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.layoutMode === nextMode);
+    });
+
+    if (refs.venuesList) {
+      refs.venuesList.classList.toggle("is-list-layout", nextMode === "list");
+    }
+
+    if (persist) {
+      try {
+        window.localStorage.setItem(PUBLIC_LAYOUT_STORAGE_KEY, nextMode);
+      } catch (_error) {
+        // Ignore storage failures and keep the UI responsive.
+      }
+    }
   }
 
   function bindVenueForm() {
@@ -182,6 +258,10 @@
           refs.formMessage,
           "Заклад відправлено на рев’ю. Після апруву він з’явиться в основному списку.",
           "is-success"
+        );
+        setActiveView("list-view");
+        showPublicSuccess(
+          "Дякуємо. Запис збережено й відправлено на перевірку адміністратора."
         );
         await updatePendingCount();
       } catch (error) {
@@ -338,26 +418,74 @@
     });
 
     refs.reviewList.addEventListener("click", async (event) => {
-      const button = event.target.closest("button[data-action]");
+      const button = event.target.closest("button");
       if (!button || !state.isReviewer) {
         return;
       }
 
-      const venueId = Number(button.dataset.id);
       const action = button.dataset.action;
+      if (button.classList.contains("edit-button")) {
+        toggleInlineEdit(button.closest(".review-card"), true);
+        return;
+      }
+
+      if (action === "cancel-edit") {
+        toggleInlineEdit(button.closest(".review-card"), false);
+        return;
+      }
+
+      if (!action) {
+        return;
+      }
+
+      const venueId = Number(button.dataset.id);
       await handleAdminVenueAction(button, venueId, action);
+    });
+
+    refs.reviewList.addEventListener("submit", async (event) => {
+      const form = event.target.closest(".inline-edit-form");
+      if (!form || !state.isReviewer) {
+        return;
+      }
+
+      event.preventDefault();
+      await handleEditSubmit(form);
     });
 
     if (refs.adminApprovedList) {
       refs.adminApprovedList.addEventListener("click", async (event) => {
-        const button = event.target.closest("button[data-action]");
+        const button = event.target.closest("button");
         if (!button || !state.isReviewer) {
           return;
         }
 
-        const venueId = Number(button.dataset.id);
         const action = button.dataset.action;
+        if (button.classList.contains("edit-button")) {
+          toggleInlineEdit(button.closest(".review-card"), true);
+          return;
+        }
+
+        if (action === "cancel-edit") {
+          toggleInlineEdit(button.closest(".review-card"), false);
+          return;
+        }
+
+        if (!action) {
+          return;
+        }
+
+        const venueId = Number(button.dataset.id);
         await handleAdminVenueAction(button, venueId, action);
+      });
+
+      refs.adminApprovedList.addEventListener("submit", async (event) => {
+        const form = event.target.closest(".inline-edit-form");
+        if (!form || !state.isReviewer) {
+          return;
+        }
+
+        event.preventDefault();
+        await handleEditSubmit(form);
       });
     }
   }
@@ -433,6 +561,55 @@
     if (error) {
       throw error;
     }
+  }
+
+  async function handleEditSubmit(form) {
+    if (!supabase || !state.isReviewer) {
+      return;
+    }
+
+    const venueId = Number(form.dataset.id);
+    const submitButton = form.querySelector(".save-edit-button");
+    const payload = {
+      name: form.querySelector(".edit-name-input").value.trim(),
+      google_maps_url: form.querySelector(".edit-maps-input").value.trim(),
+      comment: form.querySelector(".edit-comment-input").value.trim(),
+      owners: form.querySelector(".edit-owners-input").value.trim() || null,
+    };
+
+    submitButton.disabled = true;
+
+    try {
+      const { error } = await withTimeout(
+        supabase.from("venues").update(payload).eq("id", venueId),
+        REQUEST_TIMEOUT_MS,
+        "Час очікування вичерпано під час збереження змін."
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      await Promise.all([loadPendingVenues(), loadApprovedVenues()]);
+      setMessage(refs.loginMessage, "Запис оновлено.", "is-success");
+    } catch (error) {
+      setMessage(refs.loginMessage, getErrorMessage(error), "is-error");
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
+  function toggleInlineEdit(card, shouldOpen) {
+    if (!card) {
+      return;
+    }
+
+    const form = card.querySelector(".inline-edit-form");
+    if (!form) {
+      return;
+    }
+
+    form.hidden = !shouldOpen;
   }
 
   async function syncReviewerState() {
@@ -589,6 +766,11 @@
       return;
     }
 
+    refs.venuesList.classList.toggle(
+      "is-list-layout",
+      state.layoutMode === "list"
+    );
+
     if (!state.filteredVenues.length) {
       const message = state.approvedVenues.length
         ? "За цим пошуком нічого не знайдено."
@@ -726,6 +908,15 @@
       deleteButton.dataset.id = venue.id;
     }
 
+    const editForm = fragment.querySelector(".inline-edit-form");
+    if (editForm) {
+      editForm.dataset.id = venue.id;
+      editForm.querySelector(".edit-name-input").value = venue.name;
+      editForm.querySelector(".edit-maps-input").value = venue.google_maps_url;
+      editForm.querySelector(".edit-comment-input").value = venue.comment;
+      editForm.querySelector(".edit-owners-input").value = venue.owners || "";
+    }
+
     fillOwners(fragment, venue.owners);
   }
 
@@ -742,6 +933,24 @@
 
   function renderEmptyState(container, message) {
     container.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+  }
+
+  function showPublicSuccess(message) {
+    if (!refs.publicSuccessBanner || !refs.publicSuccessText) {
+      return;
+    }
+
+    refs.publicSuccessText.textContent = message;
+    refs.publicSuccessBanner.hidden = false;
+
+    if (publicNoticeTimeoutId !== null) {
+      window.clearTimeout(publicNoticeTimeoutId);
+    }
+
+    publicNoticeTimeoutId = window.setTimeout(() => {
+      refs.publicSuccessBanner.hidden = true;
+      publicNoticeTimeoutId = null;
+    }, 6000);
   }
 
   function setMessage(element, message, className) {

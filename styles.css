@@ -24,6 +24,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   font-family: "IBM Plex Sans", sans-serif;
   color: var(--ink);
   background:
@@ -233,6 +234,44 @@ h4 {
   align-items: end;
 }
 
+.list-toolbar {
+  display: grid;
+  gap: 0.85rem;
+  justify-items: end;
+}
+
+.layout-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.82);
+  border: 1px solid rgba(31, 26, 23, 0.08);
+}
+
+.layout-switch {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.layout-switch:hover,
+.layout-switch.is-active {
+  background: var(--ink);
+  color: #fff8f0;
+  transform: translateY(-1px);
+}
+
 .section-note,
 .panel-note {
   margin: 0;
@@ -277,10 +316,42 @@ h4 {
   gap: 1rem;
 }
 
+.cards-grid.is-list-layout {
+  grid-template-columns: 1fr;
+}
+
+.notice-banner {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(36, 92, 55, 0.18);
+  background: linear-gradient(180deg, rgba(234, 247, 238, 0.96), rgba(223, 242, 229, 0.9));
+  box-shadow: 0 12px 28px rgba(36, 92, 55, 0.1);
+  animation: lift-in 220ms ease;
+}
+
+.notice-title,
+.notice-text {
+  margin: 0;
+}
+
+.notice-title {
+  color: #1d5131;
+  font-weight: 700;
+}
+
+.notice-text {
+  color: #2a6640;
+  line-height: 1.55;
+}
+
 .venue-card,
 .review-card {
   display: grid;
   gap: 0.9rem;
+  min-width: 0;
   padding: 1.2rem;
   border-radius: var(--radius-md);
   background:
@@ -288,15 +359,21 @@ h4 {
   border: 1px solid rgba(31, 26, 23, 0.08);
 }
 
+.cards-grid.is-list-layout .venue-card {
+  gap: 1rem;
+}
+
 .venue-name,
 .review-name {
   max-width: 18ch;
+  overflow-wrap: anywhere;
 }
 
 .map-link {
   color: var(--accent);
   text-decoration: none;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .map-link:hover {
@@ -313,10 +390,15 @@ h4 {
 
 .comment-block {
   line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .comment-block a {
   color: var(--accent);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.16em;
 }
 
 .venue-meta {
@@ -379,18 +461,20 @@ h4 {
 
 .review-grid {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
   gap: 1.25rem;
 }
 
 .review-stack {
   display: grid;
   gap: 1.25rem;
+  min-width: 0;
 }
 
 .review-list {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .review-actions {
@@ -398,6 +482,35 @@ h4 {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 0.2rem;
+}
+
+.inline-edit-form {
+  display: grid;
+  gap: 0.85rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(31, 26, 23, 0.08);
+}
+
+.inline-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.inline-edit-form textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.review-grid > *,
+.review-panel,
+.review-card-head > div,
+.field,
+.field input,
+.field textarea,
+.comment-block,
+.owners-row {
+  min-width: 0;
 }
 
 .dual-actions {
@@ -470,11 +583,20 @@ h4 {
     flex-direction: column;
   }
 
+  .list-toolbar {
+    width: 100%;
+    justify-items: stretch;
+  }
+
   .review-grid {
     grid-template-columns: 1fr;
   }
 
   .search-field {
     width: 100%;
+  }
+
+  .layout-toggle {
+    width: max-content;
   }
 }

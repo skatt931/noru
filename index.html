@@ -6,7 +6,7 @@
     <title>Noru</title>
     <meta
       name="description"
-      content="Noru — простий реєстр закладів у Празі з модерацією через Supabase."
+      content="Noru — простий реєстр noru закладів у Празі"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,13 +23,16 @@
           <p class="eyebrow">Прага · громадський список</p>
           <h1>Noru</h1>
           <p class="hero-text">
-            Простий список закладів у Празі: з коментарями, посиланнями та
-            окремим рев’ю перед публікацією.
+            Простий список закладів у Празі: з коментарями, посиланнями.
           </p>
         </div>
 
         <nav class="view-switcher" aria-label="Перемикання view">
-          <button class="switch is-active" data-view-target="list-view" type="button">
+          <button
+            class="switch is-active"
+            data-view-target="list-view"
+            type="button"
+          >
             Список
           </button>
           <button class="switch" data-view-target="add-view" type="button">
@@ -43,17 +46,45 @@
           <div class="section-heading">
             <div>
               <p class="section-kicker">Основний view</p>
-              <h2>Апрувнуті заклади</h2>
+              <h2>Заклади які варто оминати</h2>
             </div>
-            <label class="search-field">
-              <span class="search-label">Пошук</span>
-              <input
-                id="search-input"
-                type="search"
-                placeholder="Назва або коментар"
-                autocomplete="off"
-              />
-            </label>
+            <div class="list-toolbar">
+              <div class="layout-toggle" aria-label="Вигляд списку">
+                <button
+                  class="layout-switch is-active"
+                  data-layout-mode="grid"
+                  type="button"
+                >
+                  Плитка
+                </button>
+                <button
+                  class="layout-switch"
+                  data-layout-mode="list"
+                  type="button"
+                >
+                  Список
+                </button>
+              </div>
+              <label class="search-field">
+                <span class="search-label">Пошук</span>
+                <input
+                  id="search-input"
+                  type="search"
+                  placeholder="Назва або коментар"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div
+            id="public-success-banner"
+            class="notice-banner"
+            aria-live="polite"
+            hidden
+          >
+            <p class="notice-title">Запис відправлено</p>
+            <p id="public-success-text" class="notice-text"></p>
           </div>
 
           <div id="venues-list" class="cards-grid" aria-live="polite"></div>
@@ -61,7 +92,9 @@
             <article class="venue-card">
               <div class="venue-card-header">
                 <h3 class="venue-name"></h3>
-                <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+                <a class="map-link" target="_blank" rel="noreferrer"
+                  >Google Maps</a
+                >
               </div>
               <p class="owners-row" hidden></p>
               <div class="comment-block"></div>
@@ -79,15 +112,21 @@
               <h2>Додати заклад</h2>
             </div>
             <p class="section-note">
-              Новий запис спочатку йде на рев’ю, а вже після апруву потрапляє в
-              основний список.
+              Новий запис спочатку йде на перевірку, а вже після перевірки
+              потрапляє в основний список.
             </p>
           </div>
 
           <form id="venue-form" class="panel form-panel">
             <label class="field">
               <span>Назва закладу</span>
-              <input id="name-input" name="name" type="text" required maxlength="140" />
+              <input
+                id="name-input"
+                name="name"
+                type="text"
+                required
+                maxlength="140"
+              />
             </label>
 
             <label class="field">
@@ -124,7 +163,7 @@
             </label>
 
             <button id="submit-button" class="primary-button" type="submit">
-              Надіслати на рев’ю
+              Надіслати на перевірку
             </button>
             <p id="form-message" class="form-message" aria-live="polite"></p>
           </form>

@@ -23,8 +23,8 @@
           <p class="eyebrow">Noru · admin</p>
           <h1>Admin Panel</h1>
           <p class="hero-text">
-            Окрема панель для входу адміністратора, рев’ю заявок і модерації
-            списку закладів.
+            Окрема панель для входу адміністратора, перевуірка заявок і
+            модерації списку закладів.
           </p>
         </div>
       </header>
@@ -47,7 +47,7 @@
           <div class="section-heading">
             <div>
               <p class="section-kicker">Адмінський доступ</p>
-              <h2>Рев’юерська панель</h2>
+              <h2>Панель перевірки</h2>
             </div>
             <p class="section-note">
               Ця сторінка не потрібна звичайним користувачам. Вона окрема від
@@ -59,7 +59,12 @@
             <section class="panel auth-panel">
               <div class="panel-heading">
                 <h3>Вхід адміністратора</h3>
-                <button id="logout-button" class="ghost-button" type="button" hidden>
+                <button
+                  id="logout-button"
+                  class="ghost-button"
+                  type="button"
+                  hidden
+                >
                   Вийти
                 </button>
               </div>
@@ -92,7 +97,7 @@
                   type="button"
                   hidden
                 >
-                  Стати першим рев’юером
+                  Стати першим адміном (якщо немає інших акаунтів)
                 </button>
               </div>
 
@@ -103,17 +108,25 @@
               <section class="panel review-panel">
                 <div class="panel-heading">
                   <div>
-                    <h3>Очікують на апрув</h3>
+                    <h3>Очікують на перевірку</h3>
                     <p class="panel-note">
-                      Тут достатньо апрувнути або відхилити заявку.
+                      Тут достатньо перевірити або відхилити заявку.
                     </p>
                   </div>
-                  <button id="refresh-review-button" class="ghost-button" type="button">
+                  <button
+                    id="refresh-review-button"
+                    class="ghost-button"
+                    type="button"
+                  >
                     Оновити
                   </button>
                 </div>
 
-                <div id="review-list" class="review-list" aria-live="polite"></div>
+                <div
+                  id="review-list"
+                  class="review-list"
+                  aria-live="polite"
+                ></div>
                 <template id="review-card-template">
                   <article class="review-card">
                     <div class="review-card-head">
@@ -121,18 +134,60 @@
                         <h4 class="review-name"></h4>
                         <p class="review-date"></p>
                       </div>
-                      <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+                      <a class="map-link" target="_blank" rel="noreferrer"
+                        >Google Maps</a
+                      >
                     </div>
                     <p class="owners-row" hidden></p>
                     <div class="comment-block"></div>
                     <div class="review-actions">
-                      <button class="primary-button approve-button" type="button">
-                        Апрувнути
+                      <button class="ghost-button edit-button" type="button">
+                        Редагувати
+                      </button>
+                      <button
+                        class="primary-button approve-button"
+                        type="button"
+                      >
+                        Підтвердити
                       </button>
                       <button class="ghost-button reject-button" type="button">
                         Відхилити
                       </button>
                     </div>
+                    <form class="inline-edit-form" hidden>
+                      <label class="field">
+                        <span>Назва закладу</span>
+                        <input class="edit-name-input" type="text" required maxlength="140" />
+                      </label>
+                      <label class="field">
+                        <span>Google Maps URL</span>
+                        <input class="edit-maps-input" type="url" required />
+                      </label>
+                      <label class="field">
+                        <span>Коментар</span>
+                        <textarea
+                          class="edit-comment-input"
+                          rows="5"
+                          required
+                        ></textarea>
+                      </label>
+                      <label class="field">
+                        <span>Власники або додаткова нотатка</span>
+                        <input class="edit-owners-input" type="text" maxlength="220" />
+                      </label>
+                      <div class="inline-edit-actions">
+                        <button class="primary-button save-edit-button" type="submit">
+                          Зберегти зміни
+                        </button>
+                        <button
+                          class="ghost-button cancel-edit-button"
+                          type="button"
+                          data-action="cancel-edit"
+                        >
+                          Скасувати
+                        </button>
+                      </div>
+                    </form>
                   </article>
                 </template>
               </section>
@@ -166,15 +221,54 @@
                         <h4 class="review-name"></h4>
                         <p class="review-date"></p>
                       </div>
-                      <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+                      <a class="map-link" target="_blank" rel="noreferrer"
+                        >Google Maps</a
+                      >
                     </div>
                     <p class="owners-row" hidden></p>
                     <div class="comment-block"></div>
                     <div class="review-actions">
+                      <button class="ghost-button edit-button" type="button">
+                        Редагувати
+                      </button>
                       <button class="danger-button delete-button" type="button">
                         Видалити запис
                       </button>
                     </div>
+                    <form class="inline-edit-form" hidden>
+                      <label class="field">
+                        <span>Назва закладу</span>
+                        <input class="edit-name-input" type="text" required maxlength="140" />
+                      </label>
+                      <label class="field">
+                        <span>Google Maps URL</span>
+                        <input class="edit-maps-input" type="url" required />
+                      </label>
+                      <label class="field">
+                        <span>Коментар</span>
+                        <textarea
+                          class="edit-comment-input"
+                          rows="5"
+                          required
+                        ></textarea>
+                      </label>
+                      <label class="field">
+                        <span>Власники або додаткова нотатка</span>
+                        <input class="edit-owners-input" type="text" maxlength="220" />
+                      </label>
+                      <div class="inline-edit-actions">
+                        <button class="primary-button save-edit-button" type="submit">
+                          Зберегти зміни
+                        </button>
+                        <button
+                          class="ghost-button cancel-edit-button"
+                          type="button"
+                          data-action="cancel-edit"
+                        >
+                          Скасувати
+                        </button>
+                      </div>
+                    </form>
                   </article>
                 </template>
               </section>
