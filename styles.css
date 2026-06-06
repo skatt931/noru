@@ -100,6 +100,7 @@ h4 {
 
 .hero-text,
 .section-note,
+.panel-note,
 .status-text,
 .muted-text,
 .review-date,
@@ -125,7 +126,8 @@ h4 {
 
 .switch,
 .ghost-button,
-.primary-button {
+.primary-button,
+.danger-button {
   appearance: none;
   border: none;
   cursor: pointer;
@@ -175,6 +177,14 @@ h4 {
   padding: 1.4rem;
 }
 
+.form-panel,
+.auth-panel,
+.review-panel {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
 .status-panel {
   display: flex;
   justify-content: space-between;
@@ -219,7 +229,23 @@ h4 {
 }
 
 .section-heading {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.4rem;
+  align-items: end;
+}
+
+.section-note,
+.panel-note {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.panel-heading {
+  margin-bottom: 0.25rem;
+}
+
+.panel-heading > div {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .search-field {
@@ -307,21 +333,32 @@ h4 {
   font-weight: 600;
 }
 
-.primary-button {
+.primary-button,
+.danger-button {
   padding: 0.95rem 1.2rem;
   border-radius: 999px;
-  background: var(--ink);
-  color: #fff8f0;
   box-shadow: 0 10px 24px rgba(31, 26, 23, 0.18);
 }
 
+.primary-button {
+  background: var(--ink);
+  color: #fff8f0;
+}
+
+.danger-button {
+  background: #7d2418;
+  color: #fff7f1;
+}
+
 .primary-button:hover,
-.ghost-button:hover {
+.ghost-button:hover,
+.danger-button:hover {
   transform: translateY(-1px);
 }
 
 .primary-button:disabled,
-.ghost-button:disabled {
+.ghost-button:disabled,
+.danger-button:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
@@ -343,7 +380,12 @@ h4 {
 .review-grid {
   display: grid;
   grid-template-columns: 320px 1fr;
-  gap: 1rem;
+  gap: 1.25rem;
+}
+
+.review-stack {
+  display: grid;
+  gap: 1.25rem;
 }
 
 .review-list {
@@ -355,18 +397,26 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 0.2rem;
 }
 
 .dual-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 0.2rem;
 }
 
 .reviewer-session {
   padding: 1rem;
   border-radius: var(--radius-md);
   background: rgba(168, 55, 40, 0.06);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.reviewer-session p {
+  margin: 0;
 }
 
 .empty-state {

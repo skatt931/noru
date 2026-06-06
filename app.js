@@ -12,8 +12,10 @@
     approvedCount: document.getElementById("approved-count"),
     pendingCount: document.getElementById("pending-count"),
     venuesList: document.getElementById("venues-list"),
+    adminApprovedList: document.getElementById("admin-approved-list"),
     venueCardTemplate: document.getElementById("venue-card-template"),
     reviewCardTemplate: document.getElementById("review-card-template"),
+    adminApprovedCardTemplate: document.getElementById("admin-approved-card-template"),
     searchInput: document.getElementById("search-input"),
     form: document.getElementById("venue-form"),
     submitButton: document.getElementById("submit-button"),
@@ -33,6 +35,7 @@
     claimReviewerButton: document.getElementById("claim-reviewer-button"),
     logoutButton: document.getElementById("logout-button"),
     refreshReviewButton: document.getElementById("refresh-review-button"),
+    refreshApprovedButton: document.getElementById("refresh-approved-button"),
     reviewList: document.getElementById("review-list"),
     viewButtons: document.querySelectorAll("[data-view-target]"),
     views: document.querySelectorAll(".view"),
@@ -104,9 +107,13 @@
     await handleSessionChange(data.session);
 
     await Promise.all([
-      refs.venuesList ? loadApprovedVenues() : Promise.resolve(),
+      hasApprovedViews() ? loadApprovedVenues() : Promise.resolve(),
       pageMode === "admin" && state.isReviewer ? loadPendingVenues() : Promise.resolve(),
     ]);
+  }
+
+  function hasApprovedViews() {
+    return Boolean(refs.venuesList || refs.adminApprovedList);
   }
 
   function bindViewSwitcher() {
@@ -132,7 +139,7 @@
 
     refs.searchInput.addEventListener("input", () => {
       applySearchFilter();
-      renderApprovedVenues();
+      renderPublicApprovedVenues();
     });
   }
 
@@ -288,6 +295,14 @@
       refs.refreshReviewButton.disabled = false;
     });
 
+    if (refs.refreshApprovedButton) {
+      refs.refreshApprovedButton.addEventListener("click", async () => {
+        refs.refreshApprovedButton.disabled = true;
+        await loadApprovedVenues();
+        refs.refreshApprovedButton.disabled = false;
+      });
+    }
+
     refs.claimReviewerButton.addEventListener("click", async () => {
       if (!supabase || !state.session) {
         return;
@@ -330,35 +345,94 @@
 
       const venueId = Number(button.dataset.id);
       const action = button.dataset.action;
-      const nextStatus = action === "approve" ? "approved" : "rejected";
+      await handleAdminVenueAction(button, venueId, action);
+    });
 
-      button.disabled = true;
+    if (refs.adminApprovedList) {
+      refs.adminApprovedList.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button || !state.isReviewer) {
+          return;
+        }
 
-      const updatePayload = {
-        status: nextStatus,
-        approved_at: action === "approve" ? new Date().toISOString() : null,
-        approved_by:
-          action === "approve" && state.session ? state.session.user.id : null,
-      };
+        const venueId = Number(button.dataset.id);
+        const action = button.dataset.action;
+        await handleAdminVenueAction(button, venueId, action);
+      });
+    }
+  }
 
-      const { error } = await supabase
-        .from("venues")
-        .update(updatePayload)
-        .eq("id", venueId);
+  async function handleAdminVenueAction(button, venueId, action) {
+    if (!supabase || !state.isReviewer) {
+      return;
+    }
 
-      if (error) {
-        button.disabled = false;
-        setMessage(refs.loginMessage, error.message, "is-error");
-        return;
+    const venue = [...state.pendingVenues, ...state.approvedVenues].find(
+      (item) => item.id === venueId
+    );
+
+    if (
+      action === "delete" &&
+      !window.confirm(`Видалити запис "${venue?.name || "без назви"}"?`)
+    ) {
+      return;
+    }
+
+    button.disabled = true;
+
+    try {
+      if (action === "approve" || action === "reject") {
+        await updateVenueStatus(venueId, action);
+      } else if (action === "delete") {
+        await deleteVenue(venueId);
       }
 
       await Promise.all([loadPendingVenues(), loadApprovedVenues()]);
-      setMessage(
-        refs.loginMessage,
-        action === "approve" ? "Заклад апрувнуто." : "Заклад відхилено.",
-        "is-success"
-      );
-    });
+
+      const successMessage =
+        action === "approve"
+          ? "Заклад апрувнуто."
+          : action === "reject"
+            ? "Заклад відхилено."
+            : "Запис видалено.";
+      setMessage(refs.loginMessage, successMessage, "is-success");
+    } catch (error) {
+      setMessage(refs.loginMessage, getErrorMessage(error), "is-error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function updateVenueStatus(venueId, action) {
+    const nextStatus = action === "approve" ? "approved" : "rejected";
+    const updatePayload = {
+      status: nextStatus,
+      approved_at: action === "approve" ? new Date().toISOString() : null,
+      approved_by:
+        action === "approve" && state.session ? state.session.user.id : null,
+    };
+
+    const { error } = await withTimeout(
+      supabase.from("venues").update(updatePayload).eq("id", venueId),
+      REQUEST_TIMEOUT_MS,
+      "Час очікування вичерпано під час оновлення статусу."
+    );
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async function deleteVenue(venueId) {
+    const { error } = await withTimeout(
+      supabase.from("venues").delete().eq("id", venueId),
+      REQUEST_TIMEOUT_MS,
+      "Час очікування вичерпано під час видалення запису."
+    );
+
+    if (error) {
+      throw error;
+    }
   }
 
   async function syncReviewerState() {
@@ -414,6 +488,7 @@
       refs.reviewerRoleLabel.textContent =
         "Увійдіть через Supabase Auth, якщо у вас є права рев’юера.";
       renderPendingVenues();
+      renderAdminApprovedVenues();
       return;
     }
 
@@ -423,16 +498,17 @@
       : "Користувач залогінений, але ще не має reviewer-доступу.";
     refs.claimReviewerButton.hidden = state.isReviewer;
     renderPendingVenues();
+    renderAdminApprovedVenues();
   }
 
   async function loadApprovedVenues() {
-    if (!refs.venuesList) {
+    if (!hasApprovedViews()) {
       return;
     }
 
     const { data, error } = await supabase
       .from("venues")
-      .select("id, name, google_maps_url, comment, owners, created_at")
+      .select("id, name, google_maps_url, comment, owners, created_at, approved_at")
       .eq("status", "approved")
       .order("created_at", { ascending: false });
 
@@ -449,7 +525,8 @@
     if (refs.approvedCount) {
       refs.approvedCount.textContent = `${state.approvedVenues.length} апрувнутих`;
     }
-    renderApprovedVenues();
+    renderPublicApprovedVenues();
+    renderAdminApprovedVenues();
   }
 
   async function loadPendingVenues() {
@@ -506,7 +583,7 @@
     });
   }
 
-  function renderApprovedVenues() {
+  function renderPublicApprovedVenues() {
     if (!refs.venuesList || !refs.venueCardTemplate) {
       return;
     }
@@ -525,6 +602,48 @@
       const fragment = refs.venueCardTemplate.content.cloneNode(true);
       fillVenueCard(fragment, venue);
       refs.venuesList.appendChild(fragment);
+    });
+  }
+
+  function renderAdminApprovedVenues() {
+    if (!refs.adminApprovedList || !refs.adminApprovedCardTemplate) {
+      return;
+    }
+
+    if (!state.session) {
+      renderEmptyState(
+        refs.adminApprovedList,
+        "Увійдіть як адміністратор, щоб керувати опублікованими записами."
+      );
+      return;
+    }
+
+    if (!state.isReviewer) {
+      renderEmptyState(
+        refs.adminApprovedList,
+        "Цей акаунт не має reviewer-доступу."
+      );
+      return;
+    }
+
+    if (!state.approvedVenues.length) {
+      renderEmptyState(
+        refs.adminApprovedList,
+        "Поки що немає жодного опублікованого запису."
+      );
+      return;
+    }
+
+    refs.adminApprovedList.innerHTML = "";
+
+    state.approvedVenues.forEach((venue) => {
+      const fragment = refs.adminApprovedCardTemplate.content.cloneNode(true);
+      fillReviewCard(fragment, venue, {
+        deleteOnly: true,
+        dateLabel: "Опубліковано",
+        dateValue: venue.approved_at || venue.created_at,
+      });
+      refs.adminApprovedList.appendChild(fragment);
     });
   }
 
@@ -574,19 +693,37 @@
     fillOwners(fragment, venue.owners);
   }
 
-  function fillReviewCard(fragment, venue) {
+  function fillReviewCard(fragment, venue, options = {}) {
+    const {
+      deleteOnly = false,
+      dateLabel = "Надіслано",
+      dateValue = venue.created_at,
+    } = options;
+
     fragment.querySelector(".review-name").textContent = venue.name;
-    fragment.querySelector(".review-date").textContent = `Надіслано: ${formatDate(venue.created_at)}`;
+    fragment.querySelector(".review-date").textContent = `${dateLabel}: ${formatDate(dateValue)}`;
     fragment.querySelector(".map-link").href = venue.google_maps_url;
     fragment.querySelector(".comment-block").innerHTML = formatRichText(venue.comment);
 
     const approveButton = fragment.querySelector(".approve-button");
-    approveButton.dataset.action = "approve";
-    approveButton.dataset.id = venue.id;
+    if (approveButton) {
+      approveButton.dataset.action = "approve";
+      approveButton.dataset.id = venue.id;
+      approveButton.hidden = deleteOnly;
+    }
 
     const rejectButton = fragment.querySelector(".reject-button");
-    rejectButton.dataset.action = "reject";
-    rejectButton.dataset.id = venue.id;
+    if (rejectButton) {
+      rejectButton.dataset.action = "reject";
+      rejectButton.dataset.id = venue.id;
+      rejectButton.hidden = deleteOnly;
+    }
+
+    const deleteButton = fragment.querySelector(".delete-button");
+    if (deleteButton) {
+      deleteButton.dataset.action = "delete";
+      deleteButton.dataset.id = venue.id;
+    }
 
     fillOwners(fragment, venue.owners);
   }

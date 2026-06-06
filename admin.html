@@ -99,37 +99,89 @@
               <p id="login-message" class="form-message" aria-live="polite"></p>
             </section>
 
-            <section class="panel review-panel">
-              <div class="panel-heading">
-                <h3>Очікують на апрув</h3>
-                <button id="refresh-review-button" class="ghost-button" type="button">
-                  Оновити
-                </button>
-              </div>
+            <div class="review-stack">
+              <section class="panel review-panel">
+                <div class="panel-heading">
+                  <div>
+                    <h3>Очікують на апрув</h3>
+                    <p class="panel-note">
+                      Тут можна апрувнути, відхилити або повністю видалити заявку.
+                    </p>
+                  </div>
+                  <button id="refresh-review-button" class="ghost-button" type="button">
+                    Оновити
+                  </button>
+                </div>
 
-              <div id="review-list" class="review-list" aria-live="polite"></div>
-              <template id="review-card-template">
-                <article class="review-card">
-                  <div class="review-card-head">
-                    <div>
-                      <h4 class="review-name"></h4>
-                      <p class="review-date"></p>
+                <div id="review-list" class="review-list" aria-live="polite"></div>
+                <template id="review-card-template">
+                  <article class="review-card">
+                    <div class="review-card-head">
+                      <div>
+                        <h4 class="review-name"></h4>
+                        <p class="review-date"></p>
+                      </div>
+                      <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
                     </div>
-                    <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+                    <p class="owners-row" hidden></p>
+                    <div class="comment-block"></div>
+                    <div class="review-actions">
+                      <button class="primary-button approve-button" type="button">
+                        Апрувнути
+                      </button>
+                      <button class="ghost-button reject-button" type="button">
+                        Відхилити
+                      </button>
+                      <button class="danger-button delete-button" type="button">
+                        Видалити
+                      </button>
+                    </div>
+                  </article>
+                </template>
+              </section>
+
+              <section class="panel review-panel">
+                <div class="panel-heading">
+                  <div>
+                    <h3>Опубліковані заклади</h3>
+                    <p class="panel-note">
+                      Адмін може прибрати будь-який запис із головного списку.
+                    </p>
                   </div>
-                  <p class="owners-row" hidden></p>
-                  <div class="comment-block"></div>
-                  <div class="review-actions">
-                    <button class="primary-button approve-button" type="button">
-                      Апрувнути
-                    </button>
-                    <button class="ghost-button reject-button" type="button">
-                      Відхилити
-                    </button>
-                  </div>
-                </article>
-              </template>
-            </section>
+                  <button
+                    id="refresh-approved-button"
+                    class="ghost-button"
+                    type="button"
+                  >
+                    Оновити список
+                  </button>
+                </div>
+
+                <div
+                  id="admin-approved-list"
+                  class="review-list"
+                  aria-live="polite"
+                ></div>
+                <template id="admin-approved-card-template">
+                  <article class="review-card">
+                    <div class="review-card-head">
+                      <div>
+                        <h4 class="review-name"></h4>
+                        <p class="review-date"></p>
+                      </div>
+                      <a class="map-link" target="_blank" rel="noreferrer">Google Maps</a>
+                    </div>
+                    <p class="owners-row" hidden></p>
+                    <div class="comment-block"></div>
+                    <div class="review-actions">
+                      <button class="danger-button delete-button" type="button">
+                        Видалити запис
+                      </button>
+                    </div>
+                  </article>
+                </template>
+              </section>
+            </div>
           </div>
         </section>
       </main>

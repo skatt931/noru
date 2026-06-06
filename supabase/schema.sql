@@ -84,6 +84,18 @@ with check (
   )
 );
 
+create policy "Reviewers can delete venues"
+on public.venues
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.reviewers
+    where reviewers.user_id = (select auth.uid())
+  )
+);
+
 create policy "Reviewer can see their own membership"
 on public.reviewers
 for select
