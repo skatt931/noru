@@ -456,6 +456,7 @@
     try {
       await syncReviewerState();
       if (pageMode === "admin") {
+        await loadApprovedVenues();
         updateReviewerUi();
 
         if (state.isReviewer) {
